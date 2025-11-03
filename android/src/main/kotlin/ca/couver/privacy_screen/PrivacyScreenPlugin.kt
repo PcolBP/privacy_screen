@@ -21,8 +21,13 @@ class PrivacyScreenPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Def
     private lateinit var channel: MethodChannel
     private var activity: Activity? = null
     private lateinit var context: Context
+
+    // Plugin configuration
+    private var enableSecure: Boolean = false
     private var autoLockAfterSeconds: Long = -1
     private var timeEnteredBackground: Long = 0
+
+    // -------------------- FlutterPlugin --------------------
 
     override fun onAttachedToEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
         context = binding.applicationContext
@@ -31,34 +36,38 @@ class PrivacyScreenPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Def
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
     }
 
-    override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
-        when (call.method) {
-            "updateConfig" -> {
-                val enableSecure = call.argument<Boolean>("enableSecureAndroid") ?: false
-                val autoLock = call.argument<Number>("autoLockAfterSecondsAndroid")?.toLong() ?: -1L
-
-                activity?.window?.let { window ->
-                    if (enableSecure) {
-                        window.addFlags(LayoutParams.FLAG_SECURE)
-                    } else {
-                        window.clearFlags(LayoutParams.FLAG_SECURE)
-                    }
-                }
-
-                autoLockAfterSeconds = autoLock
-                result.success(true)
-            }
-
-            else -> result.notImplemented()
-        }
-    }
-
     override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
         ProcessLifecycleOwner.get().lifecycle.removeObserver(this)
         channel.setMethodCallHandler(null)
     }
 
-    // --- Lifecycle callbacks ---
+    // -------------------- MethodCallHandler --------------------
+
+    override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
+        when (call.method) {
+            "updateConfig" -> {
+                enableSecure = call.argument<Boolean>("enableSecureAndroid") ?: false
+                autoLockAfterSeconds =
+                    call.argument<Number>("autoLockAfterSecondsAndroid")?.toLong() ?: -1
+
+                applySecureFlag() // Apply immediately if activity is available
+                result.success(true)
+            }
+            else -> result.notImplemented()
+        }
+    }
+
+    private fun applySecureFlag() {
+        activity?.window?.let { window ->
+            if (enableSecure) {
+                window.addFlags(LayoutParams.FLAG_SECURE)
+            } else {
+                window.clearFlags(LayoutParams.FLAG_SECURE)
+            }
+        }
+    }
+
+    // -------------------- DefaultLifecycleObserver --------------------
 
     private fun judgeLock() {
         if (autoLockAfterSeconds >= 0 &&
@@ -96,10 +105,11 @@ class PrivacyScreenPlugin : FlutterPlugin, MethodCallHandler, ActivityAware, Def
         channel.invokeMethod("onLifeCycle", "onDestroy")
     }
 
-    // --- ActivityAware ---
+    // -------------------- ActivityAware --------------------
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
         activity = binding.activity
+        applySecureFlag() // Apply FLAG_SECURE as soon as activity is available
     }
 
     override fun onDetachedFromActivityForConfigChanges() {
