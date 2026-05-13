@@ -29,6 +29,7 @@ abstract class PrivacyScreenPlatform extends PlatformInterface {
     required PrivacyIosOptions iosOptions,
     required PrivacyAndroidOptions androidOptions,
     required Color backgroundColor,
+    Color? backgroundColorDark,
     required PrivacyBlurEffect blurEffect,
   }) {
     throw UnimplementedError('updateConfig() has not been implemented.');

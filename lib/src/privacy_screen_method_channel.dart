@@ -16,25 +16,29 @@ class MethodChannelPrivacyScreen extends PrivacyScreenPlatform {
     required PrivacyIosOptions iosOptions,
     required PrivacyAndroidOptions androidOptions,
     required Color backgroundColor,
+    Color? backgroundColorDark,
     required PrivacyBlurEffect blurEffect,
   }) {
     double backgroundOpacity = backgroundColor.opacity;
     Color backgroundColorSolid = backgroundColor.withOpacity(1);
-    return methodChannel.invokeMethod<bool>(
-      'updateConfig',
-      {
-        'iosLockWithDidEnterBackground':
-            iosOptions.lockTrigger == IosLockTrigger.didEnterBackground,
-        'privacyImageName': iosOptions.privacyImageName,
-        'blurEffect': blurEffect.name,
-        'backgroundColor':
-            '#${backgroundColorSolid.value.toRadixString(16).substring(2, 8)}',
-        'backgroundOpacity': backgroundOpacity,
-        'enablePrivacyIos': iosOptions.enablePrivacy,
-        'autoLockAfterSecondsIos': iosOptions.autoLockAfterSeconds,
-        'enableSecureAndroid': androidOptions.enableSecure,
-        'autoLockAfterSecondsAndroid': androidOptions.autoLockAfterSeconds,
-      },
-    );
+    final Map<String, dynamic> args = {
+      'iosLockWithDidEnterBackground':
+          iosOptions.lockTrigger == IosLockTrigger.didEnterBackground,
+      'privacyImageName': iosOptions.privacyImageName,
+      'blurEffect': blurEffect.name,
+      'backgroundColor':
+          '#${backgroundColorSolid.value.toRadixString(16).substring(2, 8)}',
+      'backgroundOpacity': backgroundOpacity,
+      'enablePrivacyIos': iosOptions.enablePrivacy,
+      'autoLockAfterSecondsIos': iosOptions.autoLockAfterSeconds,
+      'enableSecureAndroid': androidOptions.enableSecure,
+      'autoLockAfterSecondsAndroid': androidOptions.autoLockAfterSeconds,
+    };
+    if (backgroundColorDark != null) {
+      final Color darkSolid = backgroundColorDark.withOpacity(1);
+      args['backgroundColorDark'] =
+          '#${darkSolid.value.toRadixString(16).substring(2, 8)}';
+    }
+    return methodChannel.invokeMethod<bool>('updateConfig', args);
   }
 }

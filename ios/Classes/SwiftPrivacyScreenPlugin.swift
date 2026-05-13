@@ -1,13 +1,14 @@
 import Flutter
 import UIKit
 
-public class SwiftPrivacyScreenPlugin: NSObject, FlutterPlugin {
+public class SwiftPrivacyScreenPlugin: NSObject, FlutterPlugin, FlutterSceneLifeCycleDelegate {
     
     var enablePrivacy = false
     var lockWithDidEnterBackground = true
     var privacyImageName: String?
     var backgroundOpacity: CGFloat = 1
     var backgroundColor: UIColor = UIColor.white
+    var backgroundColorDark: UIColor? = nil
     var backgroundTask: UIBackgroundTaskIdentifier!
     var privacyUIView: UIView?
     var isInFadeIn: Bool = false
@@ -31,11 +32,12 @@ public class SwiftPrivacyScreenPlugin: NSObject, FlutterPlugin {
     public static func register(with registrar: FlutterPluginRegistrar) {
         let instance = SwiftPrivacyScreenPlugin(registrar: registrar)
         registrar.addMethodCallDelegate(instance, channel: instance.methodChannel)
+        registrar.addSceneDelegate(instance)
     }
     
     private func createPrivacyView() {
         
-        if let window = UIApplication.shared.keyWindow {
+        if let window = registrar.viewController?.view.window {
             dismissPrivacyView()
             privacyUIView = UIView(frame: window.bounds);
             privacyUIView?.alpha = 0.0
@@ -55,7 +57,8 @@ public class SwiftPrivacyScreenPlugin: NSObject, FlutterPlugin {
             
             if (backgroundOpacity > 0) {
                 let opacityView = UIView(frame: window.bounds)
-                opacityView.backgroundColor = backgroundColor
+                let isDark = window.traitCollection.userInterfaceStyle == .dark
+                opacityView.backgroundColor = (isDark && backgroundColorDark != nil) ? backgroundColorDark! : backgroundColor
                 opacityView.alpha = backgroundOpacity
                 privacyUIView!.addSubview(opacityView)
             }
@@ -114,6 +117,8 @@ public class SwiftPrivacyScreenPlugin: NSObject, FlutterPlugin {
     }
     
     
+    // MARK: - AppDelegate lifecycle (retained for apps not yet on UIScene)
+
     public func applicationDidBecomeActive(_ application: UIApplication) {
         methodChannel.invokeMethod("onLifeCycle", arguments: "applicationDidBecomeActive")
         judgeLock()
@@ -136,6 +141,37 @@ public class SwiftPrivacyScreenPlugin: NSObject, FlutterPlugin {
         }
         methodChannel.invokeMethod("onLifeCycle", arguments: "applicationWillResignActive")
         if ( enablePrivacy ) {
+            self.registerBackgroundTask()
+            UIApplication.shared.ignoreSnapshotOnNextApplicationLaunch()
+            createPrivacyView()
+            self.endBackgroundTask()
+        }
+    }
+
+    // MARK: - UIScene lifecycle
+
+    public func sceneDidBecomeActive(_ scene: UIScene) {
+        methodChannel.invokeMethod("onLifeCycle", arguments: "applicationDidBecomeActive")
+        judgeLock()
+    }
+
+    public func sceneDidEnterBackground(_ scene: UIScene) {
+        if lockWithDidEnterBackground {
+            timeEnteredBackground = NSDate().timeIntervalSince1970
+        }
+        methodChannel.invokeMethod("onLifeCycle", arguments: "applicationDidEnterBackground")
+    }
+
+    public func sceneWillEnterForeground(_ scene: UIScene) {
+        methodChannel.invokeMethod("onLifeCycle", arguments: "applicationWillEnterForeground")
+    }
+
+    public func sceneWillResignActive(_ scene: UIScene) {
+        if !lockWithDidEnterBackground {
+            timeEnteredBackground = NSDate().timeIntervalSince1970
+        }
+        methodChannel.invokeMethod("onLifeCycle", arguments: "applicationWillResignActive")
+        if enablePrivacy {
             self.registerBackgroundTask()
             UIApplication.shared.ignoreSnapshotOnNextApplicationLaunch()
             createPrivacyView()
@@ -177,6 +213,12 @@ public class SwiftPrivacyScreenPlugin: NSObject, FlutterPlugin {
                     self.backgroundColor = hexStringToUIColor(hex: backgroundColor)
                 } else {
                     self.backgroundColor = UIColor.white
+                }
+                
+                if let backgroundColorDark = args["backgroundColorDark"] as? String {
+                    self.backgroundColorDark = hexStringToUIColor(hex: backgroundColorDark)
+                } else {
+                    self.backgroundColorDark = nil
                 }
                 
                 if let blurEffect = args["blurEffect"] as? String {
