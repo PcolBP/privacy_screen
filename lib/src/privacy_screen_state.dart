@@ -9,12 +9,14 @@ class PrivacyScreenState {
   final PrivacyAndroidOptions androidOptions;
   final PrivacyBlurEffect blurEffect;
   final Color backgroundColor;
+  final Color? backgroundColorDark;
 
   const PrivacyScreenState({
     this.iosOptions = const PrivacyIosOptions(),
     this.androidOptions = const PrivacyAndroidOptions(),
     this.blurEffect = PrivacyBlurEffect.extraLight,
     this.backgroundColor = const Color(0xFFFFFFFF),
+    this.backgroundColorDark,
   });
 
   PrivacyScreenState copyWith({
@@ -23,12 +25,14 @@ class PrivacyScreenState {
     PrivacyAndroidOptions? androidOptions,
     PrivacyBlurEffect? blurEffect,
     Color? backgroundColor,
+    Color? backgroundColorDark,
   }) {
     return PrivacyScreenState(
       androidOptions: androidOptions ?? this.androidOptions,
       iosOptions: iosOptions ?? this.iosOptions,
       blurEffect: blurEffect ?? this.blurEffect,
       backgroundColor: backgroundColor ?? this.backgroundColor,
+      backgroundColorDark: backgroundColorDark ?? this.backgroundColorDark,
     );
   }
 }

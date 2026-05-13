@@ -63,6 +63,7 @@ class PrivacyScreen {
       stateNotifier.value.androidOptions;
   PrivacyBlurEffect get blurEffect => stateNotifier.value.blurEffect;
   Color get backgroundColor => stateNotifier.value.backgroundColor;
+  Color? get backgroundColorDark => stateNotifier.value.backgroundColorDark;
   AppLifeCycle get appLifeCycle => lifeCycleNotifier.value;
 
   Future<bool> enable({
@@ -77,6 +78,10 @@ class PrivacyScreen {
     /// It can also be an translucent color
     Color backgroundColor = const Color(0xffffffff),
 
+    /// Dark mode background color. When provided and the device is in dark mode,
+    /// this color is used instead of [backgroundColor] on iOS.
+    Color? backgroundColorDark,
+
     /// A blur effect for PrivacyView on IOS
     /// and the locker's background
     PrivacyBlurEffect blurEffect = PrivacyBlurEffect.extraLight,
@@ -85,6 +90,7 @@ class PrivacyScreen {
       iosOptions: iosOptions,
       androidOptions: androidOptions,
       backgroundColor: backgroundColor,
+      backgroundColorDark: backgroundColorDark,
       blurEffect: blurEffect,
     );
     if (result) {
@@ -92,6 +98,7 @@ class PrivacyScreen {
         androidOptions: androidOptions,
         iosOptions: iosOptions,
         backgroundColor: backgroundColor,
+        backgroundColorDark: backgroundColorDark,
         blurEffect: blurEffect,
       );
     }
@@ -120,12 +127,14 @@ class PrivacyScreen {
     required PrivacyIosOptions iosOptions,
     required PrivacyAndroidOptions androidOptions,
     required Color backgroundColor,
+    Color? backgroundColorDark,
     required PrivacyBlurEffect blurEffect,
   }) async {
     final bool? result = await PrivacyScreenPlatform.instance.updateConfig(
       iosOptions: iosOptions,
       androidOptions: androidOptions,
       backgroundColor: backgroundColor,
+      backgroundColorDark: backgroundColorDark,
       blurEffect: blurEffect,
     );
     return result ?? false;
