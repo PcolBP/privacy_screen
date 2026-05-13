@@ -26,7 +26,6 @@ public class SwiftPrivacyScreenPlugin: NSObject, FlutterPlugin, FlutterSceneLife
         self.registrar = registrar
         methodChannel = FlutterMethodChannel(name: "channel.couver.privacy_screen", binaryMessenger: registrar.messenger())
         super.init()
-        registrar.addApplicationDelegate(self)
     }
     
     public static func register(with registrar: FlutterPluginRegistrar) {
@@ -117,37 +116,6 @@ public class SwiftPrivacyScreenPlugin: NSObject, FlutterPlugin, FlutterSceneLife
     }
     
     
-    // MARK: - AppDelegate lifecycle (retained for apps not yet on UIScene)
-
-    public func applicationDidBecomeActive(_ application: UIApplication) {
-        methodChannel.invokeMethod("onLifeCycle", arguments: "applicationDidBecomeActive")
-        judgeLock()
-    }
-    
-    public func applicationDidEnterBackground(_ application: UIApplication) {
-        if(lockWithDidEnterBackground) {
-            timeEnteredBackground = NSDate().timeIntervalSince1970
-        }
-        methodChannel.invokeMethod("onLifeCycle", arguments: "applicationDidEnterBackground")
-    }
-    
-    public func applicationWillEnterForeground(_ application: UIApplication) {
-        methodChannel.invokeMethod("onLifeCycle", arguments: "applicationWillEnterForeground")
-    }
-    
-    public func applicationWillResignActive(_ application: UIApplication) {
-        if(!lockWithDidEnterBackground) {
-            timeEnteredBackground = NSDate().timeIntervalSince1970
-        }
-        methodChannel.invokeMethod("onLifeCycle", arguments: "applicationWillResignActive")
-        if ( enablePrivacy ) {
-            self.registerBackgroundTask()
-            UIApplication.shared.ignoreSnapshotOnNextApplicationLaunch()
-            createPrivacyView()
-            self.endBackgroundTask()
-        }
-    }
-
     // MARK: - UIScene lifecycle
 
     public func sceneDidBecomeActive(_ scene: UIScene) {
