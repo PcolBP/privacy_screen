@@ -93,7 +93,7 @@ public class SwiftPrivacyScreenPlugin: NSObject, FlutterPlugin, FlutterSceneLife
                               animations:  {
                 self.privacyUIView?.alpha = 0.0
             }) { (finished) in
-                if finished && self.privacyUIView != nil && self.isInFadeIn {
+                if self.privacyUIView != nil {
                     for subview in self.privacyUIView!.subviews { subview.removeFromSuperview() }
                     self.privacyUIView?.removeFromSuperview()
                     self.privacyUIView = nil
